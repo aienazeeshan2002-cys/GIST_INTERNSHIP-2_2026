@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThreatMonitor | Security Dashboard UI</title>
+    <style>
+        :root {
+            --bg-main: #0b0f19;
+            --bg-sidebar: #111827;
+            --bg-card: #1f2937;
+            --primary: #3b82f6;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --border: #374151;
+            --transition: all 0.25s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- SIDEBAR NAVIGATION --- */
+        .sidebar {
+            width: 250px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            transition: var(--transition);
+        }
+
+        .brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+
+        .nav-item.active a, .nav-item a:hover {
+            background-color: var(--primary);
+            color: #fff;
+        }
+
+        /* --- MAIN CONTENT LAYOUT --- */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .topbar {
+            padding: 1rem 2rem;
+            background-color: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dashboard-content {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* --- METRIC CARDS --- */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .card-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        /* --- CONTROLS & TABLE SECTION --- */
+        .table-section {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .search-filter-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .input-control {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 0.5rem 1.25rem;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .data-table th, .data-table td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table th {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .badge {
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .badge-critical { background-color: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .badge-warning { background-color: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .badge-resolved { background-color: rgba(16, 185, 129, 0.2); color: var(--success); }
+
+        /* --- MODAL STYLES --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- RESPONSIVE MOBILE ADJUSTMENTS --- */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+            .table-controls { flex-direction: column; align-items: stretch; }
+            .data-table { display: block; overflow-x: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+        <div class="brand">🛡️ ThreatMonitor</div>
+        <ul class="nav-list">
+            <li class="nav-item active"><a href="#">📊 Overview</a></li>
+            <li class="nav-item"><a href="#">🚨 Incidents</a></li>
+            <li class="nav-item"><a href="#">🔒 Assets</a></li>
+            <li class="nav-item"><a href="#">⚙️ Settings</a></li>
+        </ul>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-wrapper">
+        <header class="topbar">
+            <h2>Security Operations Center Dashboard</h2>
+            <span>User: <strong>Analyst</strong></span>
+        </header>
+
+        <main class="dashboard-content">
+            <!-- CARDS GRID -->
+            <section class="cards-grid">
+                <div class="card">
+                    <span class="card-title">Total Logs Processed</span>
+                    <span class="card-value" id="metricTotalLogs">1,248</span>
+                </div>
+                <div class="card">
+                    <span class="card-title">Critical Threats</span>
+                    <span class="card-value" style="color: var(--danger)" id="metricCritical">0</span>
+                </div>
+                <div class="card">
+                    <span class="card-title">Pending Investigation</span>
+                    <span class="card-value" style="color: var(--warning)" id="metricPending">0</span>
+                </div>
+                <div class="card">
+                    <span class="card-title">Resolved Incidents</span>
+                    <span class="card-value" style="color: var(--success)" id="metricResolved">0</span>
+                </div>
+            </section>
+
+            <!-- INTERACTIVE TABLE SECTION -->
+            <section class="table-section">
+                <div class="table-controls">
+                    <h3>Active Threat Logs</h3>
+                    <div class="search-filter-group">
+                        <input type="text" id="searchInput" class="input-control" placeholder="Search target or vector...">
+                        <select id="filterSeverity" class="input-control">
+                            <option value="ALL">All Severities</option>
+                            <option value="CRITICAL">Critical</option>
+                            <option value="WARNING">Warning</option>
+                            <option value="RESOLVED">Resolved</option>
+                        </select>
+                        <button class="btn" id="openModalBtn">+ Log Threat</button>
+                    </div>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Target Vector</th>
+                            <th>Severity</th>
+                            <th>Timestamp</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Dynamic JS Rows rendered here -->
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL FORM FOR NEW DATA -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Log New Threat Incident</h3>
+                <span style="cursor:pointer;" id="closeModalBtn">✖</span>
+            </div>
+            <form id="addThreatForm">
+                <div style="margin-bottom:1rem;">
+                    <label style="display:block; font-size:0.85rem; margin-bottom:0.4rem;">Target Vector / URL</label>
+                    <input type="text" id="formVector" class="input-control" style="width:100%;" placeholder="e.g. auth-relay.net" required>
+                </div>
+                <div style="margin-bottom:1.5rem;">
+                    <label style="display:block; font-size:0.85rem; margin-bottom:0.4rem;">Severity Level</label>
+                    <select id="formSeverity" class="input-control" style="width:100%;">
+                        <option value="CRITICAL">Critical</option>
+                        <option value="WARNING">Warning</option>
+                        <option value="RESOLVED">Resolved</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn" style="width:100%;">Submit Incident</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Initial Mock Dataset
+        let threatData = [
+            { id: "SEC-101", vector: "paypal-security-login.com", severity: "CRITICAL", timestamp: "10:14:22 AM" },
+            { id: "SEC-102", vector: "unauthorized-ssh-attempt", severity: "WARNING", timestamp: "10:18:05 AM" },
+            { id: "SEC-103", vector: "internal-api-gateway", severity: "RESOLVED", timestamp: "10:22:40 AM" },
+            { id: "SEC-104", vector: "auth-update-phish.net", severity: "CRITICAL", timestamp: "10:30:11 AM" }
+        ];
+
+        // DOM Selectors
+        const tableBody = document.getElementById('tableBody');
+        const searchInput = document.getElementById('searchInput');
+        const filterSeverity = document.getElementById('filterSeverity');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const openModalBtn = document.getElementById('openModalBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const addThreatForm = document.getElementById('addThreatForm');
+
+        // Render Table and Metrics
+        function renderDashboard() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const selectedFilter = filterSeverity.value;
+
+            // Filter Dataset
+            const filteredData = threatData.filter(item => {
+                const matchesSearch = item.vector.toLowerCase().includes(searchTerm) || item.id.toLowerCase().includes(searchTerm);
+                const matchesFilter = selectedFilter === 'ALL' || item.severity === selectedFilter;
+                return matchesSearch && matchesFilter;
+            });
+
+            // Populate Table Rows
+            tableBody.innerHTML = '';
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--text-muted);">No matching threat vectors identified.</td></tr>`;
+            } else {
+                filteredData.forEach(item => {
+                    const badgeClass = item.severity === 'CRITICAL' ? 'badge-critical' : item.severity === 'WARNING' ? 'badge-warning' : 'badge-resolved';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${item.id}</strong></td>
+                        <td>${item.vector}</td>
+                        <td><span class="badge ${badgeClass}">${item.severity}</span></td>
+                        <td>${item.timestamp}</td>
+                        <td><button onclick="deleteThreat('${item.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">Delete</button></td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            // Update Metrics Counters
+            document.getElementById('metricCritical').textContent = threatData.filter(i => i.severity === 'CRITICAL').length;
+            document.getElementById('metricPending').textContent = threatData.filter(i => i.severity === 'WARNING').length;
+            document.getElementById('metricResolved').textContent = threatData.filter(i => i.severity === 'RESOLVED').length;
+        }
+
+        // Action Handlers
+        function deleteThreat(id) {
+            threatData = threatData.filter(item => item.id !== id);
+            renderDashboard();
+        }
+
+        // Form Submission
+        addThreatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newVector = document.getElementById('formVector').value;
+            const newSeverity = document.getElementById('formSeverity').value;
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+
+            const newEntry = {
+                id: `SEC-${100 + threatData.length + 1}`,
+                vector: newVector,
+                severity: newSeverity,
+                timestamp: timeString
+            };
+
+            threatData.unshift(newEntry);
+            renderDashboard();
+            addThreatForm.reset();
+            modalOverlay.style.display = 'none';
+        });
+
+        // Event Listeners for Filters & Modal
+        searchInput.addEventListener('input', renderDashboard);
+        filterSeverity.addEventListener('change', renderDashboard);
+        openModalBtn.addEventListener('click', () => modalOverlay.style.display = 'flex');
+        closeModalBtn.addEventListener('click', () => modalOverlay.style.display = 'none');
+
+        // Initial Initialization
+        renderDashboard();
+    </script>
+</body>
+</html>
